@@ -393,7 +393,7 @@
                                        <p><lightning-formatted-text value="Starts at"></lightning-formatted-text></p>
                                     </lightning-layout-item>
                                     <lightning-layout-item padding="around_small" size="3">
-                                       <lightning-input type="time" name="input4" label="" variant=label-hidden required onchange={handleschChangetime}></lightning-input>
+                                       <lightning-input type="time" class="startsAt" name="input4" label="" variant=label-hidden required onchange={handleschChangetime}></lightning-input>
                                     </lightning-layout-item>
                                     <lightning-layout-item padding="around_small" size="6"></lightning-layout-item>
                                  </lightning-layout>
@@ -402,7 +402,7 @@
                                        <p><lightning-formatted-text value="Date"></lightning-formatted-text></p>
                                     </lightning-layout-item>
                                     <lightning-layout-item padding="around_small" size="3">
-                                       <lightning-input type="date" name="input4" label="" variant=label-hidden required onchange={handleschChangeDate}></lightning-input>
+                                       <lightning-input type="date" class="dateCls" name="input4" min={today} label="" variant=label-hidden required onchange={handleschChangeDate}></lightning-input>
                                     </lightning-layout-item>
                                     <lightning-layout-item padding="around_small" size="6"></lightning-layout-item>
                                  </lightning-layout>

@@ -1,6 +1,17 @@
 global class HerokuAdminUIController {
     
     @AuraEnabled(cacheable=true)
+    public static list<Configuration_Heroku__c> getSummaryHerokuRecs(){
+        list<Configuration_Heroku__c> getRecords=New list<Configuration_Heroku__c>();
+        Try{
+            getRecords=[Select id,Name,Status__c,Createddate from Configuration_Heroku__c order by createddate desc];
+            Return getRecords;
+        }Catch(Exception e){
+            System.debug('Watch catchBlock Error::'+e.getMessage()+'====LineNumber==='+e.getLineNumber());
+            return getRecords;
+        }
+    }
+    @AuraEnabled(cacheable=true)
     public static list<objectDetails> retrieveObjects(){
         Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
         list<String> ObjectsName = new list<String>();
@@ -93,15 +104,20 @@ global class HerokuAdminUIController {
         }
     }
     @AuraEnabled
-    public static boolean saveMetadata(List<herokuWrapper> myWrap,String Scheduleby,String ScheduleTime,String ScheduleAt){
-        
-        try{
+    public static String saveMetadata(List<herokuWrapper> myWrap,String Scheduleby,String ScheduleTime,String ScheduleAt, String SelectedDate){
+        String response;
+        //try{
             System.debug('Watch MyWrapper:::'+myWrap.size());
             //System.debug('Watch MyWrapper:::'+Scheduleby+ScheduleTime+ScheduleAt);
-           Configuration_Heroku__c createHeroku=New Configuration_Heroku__c();
+            Configuration_Heroku__c createHeroku=New Configuration_Heroku__c();
             createHeroku.Runs_on__c=ScheduleAt;
             createHeroku.Schedule_By__c=Scheduleby;
-            createHeroku.Starts_At__c=ScheduleTime;
+            createHeroku.Date__c = Date.valueOf(SelectedDate);
+            if(ScheduleTime != Null){
+                String[] convertToTime= ScheduleTime.split(':');
+                createHeroku.Starts_At__c = Time.newInstance(Integer.valueOf(convertToTime[0]),Integer.valueOf(convertToTime[1]),Integer.valueOf(convertToTime[2]),0);
+            }
+            createHeroku.Status__c='Active';
             for(integer i=0; i<myWrap.size(); i++){
                 if(i==0){
                     createHeroku.Object_1_API_Name__c= myWrap[i].objectAPIName;
@@ -111,30 +127,31 @@ global class HerokuAdminUIController {
                 if(i==1){
                     createHeroku.Object_2_API_Name__c= myWrap[i].objectAPIName;
                     createHeroku.Filter_Condition_2__c= myWrap[i].ObjWhereCondition;
-                     createHeroku.Fields_2_APIs__c= myWrap[i].selectedObjFieldsList;
+                    createHeroku.Fields_2_APIs__c= myWrap[i].selectedObjFieldsList;
                 }
                 if(i==2){
                     createHeroku.Object_3_API_Name__c= myWrap[i].objectAPIName;
                     createHeroku.Filter_Condition_3__c= myWrap[i].ObjWhereCondition;
-                     createHeroku.Fields_3_APIs__c= myWrap[i].selectedObjFieldsList;
+                    createHeroku.Fields_3_APIs__c= myWrap[i].selectedObjFieldsList;
                 }
                 if(i==3){
                     createHeroku.Object_4_API_Name__c= myWrap[i].objectAPIName;
                     createHeroku.Filter_Condition_4__c= myWrap[i].ObjWhereCondition;
-                     createHeroku.Fields_4_APIs__c= myWrap[i].selectedObjFieldsList;
+                    createHeroku.Fields_4_APIs__c= myWrap[i].selectedObjFieldsList;
                 }
                 if(i==4){
                     createHeroku.Object_5_API_Name__c= myWrap[i].objectAPIName;
                     createHeroku.Filter_Condition_5__c= myWrap[i].ObjWhereCondition;
-                     createHeroku.Fields_5_APIs__c= myWrap[i].selectedObjFieldsList;
+                    createHeroku.Fields_5_APIs__c= myWrap[i].selectedObjFieldsList;
                 }
             }
             insert createHeroku;
-            
-            return true;
-        }catch(exception e){
-            return false;
-        }
+            system.debug('createHeroku =====' + createHeroku);
+            return createHeroku.id;
+        /*}catch(exception e){
+            system.debug('exception e=====' + e);
+            return 'false'; 
+        }*/
         
     }
     Public class herokuWrapper{
@@ -153,5 +170,5 @@ global class HerokuAdminUIController {
         @AuraEnabled
         Public boolean IsObjWhereCondition{ get; set; }      
     }
-    
+   
 }
