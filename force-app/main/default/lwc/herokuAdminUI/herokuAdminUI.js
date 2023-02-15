@@ -44,11 +44,11 @@ const filterCreatedDateFilters = [
 
 
 export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
-
- @track recordsToDisplay = [];
-  @track rtdRecordCount;
-  @track isPagination = false;
-  @track RTDData = [];
+    @track today = new Date().toISOString().slice(0,10);
+    @track recordsToDisplay = [];
+    @track rtdRecordCount;
+    @track isPagination = false;
+    @track RTDData = [];
 
     @track herokuColumnss=columnshe;
     @track error;
@@ -98,11 +98,11 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
     @track resetVisibility = false;
     @track filterCondition;
 
-     @track isShowModal = false;
-     @track selectedRowObjName='';
-      @track summaryList;
+    @track isShowModal = false;
+    @track selectedRowObjName='';
+    @track summaryList;
      
-     @track sortBy;
+    @track sortBy;
     @track sortDirection;
     
    
@@ -350,27 +350,32 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
                             'The filters removed',
                     });
                     this.dispatchEvent(eventSuccess);
-    }
-    }
-
-
-    saveMetadataAction(){
-        const allValid = [
-            ...this.template.querySelectorAll('lightning-input'),
-        ].reduce((validSoFar, inputCmp) => {
-            inputCmp.reportValidity();
-            return validSoFar && inputCmp.checkValidity();
-        }, true);
-        if (allValid) {
-            //alert('All form entries look valid. Ready to submit!');
-        } else {
-            //alert('Please update the invalid form entries and try again.');
         }
+    }
+    saveMetadataAction(){
+        var dateValidated = false;
+        let startsAt = this.template.querySelector(".startsAt");
+        let dateCmp = this.template.querySelector(".dateCls");
+        if(!startsAt) {
+            startsAt.setCustomValidity("Starts At Field is Required");
+        }
+        startsAt.reportValidity();
+        
+        var today = new Date();
+        today = today.toISOString().slice(0,10);
+        if(dateCmp.value < today){
+            dateCmp.setCustomValidity('Date should always more than today');
+        } else {
+            dateValidated = true;
+            dateCmp.setCustomValidity('');
+        }
+        dateCmp.reportValidity();
 
+        if(dateValidated===true){
         saveMetadata({myWrap : this.selectedObjList, Scheduleby : this.schselectedValue, ScheduleTime : this.schselectedValueTime, ScheduleAt : this.selectedValue, SelectedDate : this.schselectedValueDate})
         .then(result=>{
             if(result){
-       
+        //alert(JSON.stringify(result));
                         this.dispatchEvent(
                             new ShowToastEvent({
                                 title: 'Success',
@@ -387,8 +392,10 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
                     recordId: result
                     }
                 });
+               this.homeBarAction();
+            this.getHerokuSummary();
         }
-    })
+        })
         .catch((error) => {
             const eventError = new ShowToastEvent({
                 title: 'Error!',
@@ -399,7 +406,7 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
             this.error = error;
             this.fieldList = undefined;
         });
-
+    }
     }
 
     prepareData(){
@@ -649,6 +656,15 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
             this.progressIndicator = 'Step1';
             this.nextNavigationVisibility = true;
             this.backNavigationVisibility = true;
+            
+             this.selectedStep = 'Step1';
+             this.SaveNavigationVisibility=true;
+             this.nextNavigationVisibility=false;
+             this.savebutton=false;
+             this.nextbutton=true;
+             this.backNavigationVisibility=false;
+             this.fieldList='';
+             
     }
 
     handleCreatedDateFilterChange(event) {
