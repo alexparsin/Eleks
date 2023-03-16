@@ -397,10 +397,14 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
         }
         })
         .catch((error) => {
+            let errors = '';
+            error.body.pageErrors.forEach(err => {
+                errors += err.message;
+            });
             const eventError = new ShowToastEvent({
                 title: 'Error!',
                 variant: 'error',
-                message:error,
+                message: errors,
             });
             this.dispatchEvent(eventError);
             this.error = error;
