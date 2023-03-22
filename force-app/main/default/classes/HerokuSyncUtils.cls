@@ -3,20 +3,28 @@ public without sharing class HerokuSyncUtils {
     public class ConfigurationException extends HerokuSyncException {}
 
     public static HTTPRequest populateCredentials(){
-        List<Heroku_Credential__mdt> cred = new List<Heroku_Credential__mdt>();
-        cred = [SELECT Endpoint__c, Username__c, Password__c FROM Heroku_Credential__mdt];
-        if(cred.size() == 0){
-            // Log an error: credentials have not been configured in custom metadata
-            throw new ConfigurationException('Credentials have not been configured in custom metadata');
+        Profile adminProfile = [SELECT Id FROM Profile WHERE Name = 'System Administrator'];
+        Heroku_Sync_Settings__c hss = Heroku_Sync_Settings__c.getInstance(adminProfile.Id);
+        if(hss == null){
+            // Log an error: credentials have not been configured in custom settings
+            throw new ConfigurationException('Configuration not found in custom settings');
         }
-        if(cred.size() > 1){
-            // Log an error: there should be only one credential configured in custom metadata
-            throw new ConfigurationException('There should be only one credential configured in custom metadata');
+        if(String.isBlank(hss.Username__c) || String.isBlank(hss.Password__c)){
+            // Log an error: Username and Password should be populated in Custom Setting
+            throw new ConfigurationException('The Username and Password should be populated in custom settings');
+        }
+        if(String.isBlank(hss.Encryption_Key_Heroku__c) || String.isBlank(hss.Encryption_Key_SF__c)){
+            // Log an error: Encryption Keys should be populated in Custom Setting
+            throw new ConfigurationException('The Encryption Keys should be populated in custom settings');
+        }
+        if(String.isBlank(hss.Init_Vector_Heroku__c) || String.isBlank(hss.Init_Vector_SF__c)){
+            // Log an error: Encryption Keys should be populated in Custom Setting
+            throw new ConfigurationException('The Init Vectors should be populated in custom settings');
         }
         HTTPRequest req = new HTTPRequest();
-        req.setHeader('username', cred[0].Username__c);
-        req.setHeader('password', cred[0].Password__c);
-        req.setEndpoint(cred[0].Endpoint__c);
+        req.setHeader('username', hss.Username__c);
+        req.setHeader('password', hss.Password__c);
+        req.setEndpoint(hss.Endpoint__c);
         return req;
     }
 
