@@ -1,5 +1,4 @@
 public interface HerokuSync_Interface {
-    HttpResponse authenticate();
-    HttpResponse syncRecords(List<sObject> records);
-    HttpResponse searchRecords(String searchTerm);
+    List<sObject> syncRecords(List<sObject> records);
+    List<sObject> searchRecords(String searchTerm);
 }

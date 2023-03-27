@@ -1,5 +1,7 @@
 import { LightningElement, wire, track, api } from 'lwc';
 import loadObjects from '@salesforce/apex/HerokuAdminUIController.retrieveObjects';
+import loadConfig from '@salesforce/apex/HerokuAdminUIController.getSyncConfig';
+import generateSyncConfig from '@salesforce/apex/HerokuAdminUIController.generateSyncConfig';
 import getFields from '@salesforce/apex/HerokuAdminUIController.getFields';
 import checkSyntax from '@salesforce/apex/HerokuAdminUIController.checkSyntax';
 import saveMetadata from '@salesforce/apex/HerokuAdminUIController.saveMetadata';
@@ -105,6 +107,10 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
     @track sortBy;
     @track sortDirection;
     
+    @track configurationRequired = true;
+    
+    @track componentIsLoading = true;
+
    
     handleSortObjectData(event) {       
         this.sortBy = event.detail.fieldName;       
@@ -202,8 +208,21 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
 
     connectedCallback() {
         this.getHerokuSummary();
+        loadConfig()
+            .then((result) => {
+                if(result){
+                    this.configurationRequired = false;
+                }
+            })
+            .catch((error) => {
+                console.error('loadConfig error');
+                console.error(error);
+                this.error = error;
+            });
         loadObjects()
             .then((result) => {
+                this.componentIsLoading = false;
+                console.log(result);
                 this.objList = result;
                 this.allObjectsTable = true;
                 this.initialRecordsObject = result;
@@ -397,10 +416,15 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
         }
         })
         .catch((error) => {
+            let errors = '';
+            error.body.pageErrors.forEach(err => {
+                errors += err.message;
+            });
+            console.log(errors);
             const eventError = new ShowToastEvent({
                 title: 'Error!',
                 variant: 'error',
-                message:error,
+                message: errors,
             });
             this.dispatchEvent(eventError);
             this.error = error;
@@ -804,6 +828,20 @@ export default class HerokuAdminUI extends NavigationMixin(LightningElement) {
     handleRowAction(event) {
         const row = event.detail.row;
         row.expandable = !row.expandable;
+    }
+
+    generateConfiguration(){
+        this.componentIsLoading = true;
+        generateSyncConfig()
+            .then((result) => {
+                this.componentIsLoading = false;
+                this.configurationRequired = false;
+            })
+            .catch((error) => {
+                console.error(error);
+                this.componentIsLoading = false;
+                this.error = error;
+            });
     }
 
 }
