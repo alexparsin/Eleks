@@ -48,11 +48,11 @@
                            <!--Progress indicator for the Objects Configuration-->
 
                            <div class="page-section page-header">
-                              <!--div class="slds-text-heading_large slds-text-title_caps slds-text-color_success">All Objects
-                              </div-->
 
                               <lightning-progress-indicator current-step={progressIndicator} type="path"
                                  variant="shaded">
+                                 <lightning-progress-step label="Select Flow" onstepfocus={selectStep0} value="Step0">
+                                 </lightning-progress-step>
                                  <lightning-progress-step label="Select Object" onstepfocus={selectStep1} value="Step1">
                                  </lightning-progress-step>
                                  <lightning-progress-step label="Choose fields" onstepfocus={selectStep2} value="Step2">
@@ -68,6 +68,35 @@
                            </div>
 
                            <div class="page-section page-main">
+
+                              <!-- SELECT FLOW SECTION-->
+
+                              <div class="slds-m-around_medium">
+                                 <template if:true={flowSelectPage}>
+                                    <div class="slds-grid slds-gutters slds-wrap">
+                                       <div class="slds-col slds-grid slds-size_1-of-1 slds-var-p-around_medium">
+                                          <div class="slds-col slds-size_1-of-3 slds-text-align_right">
+                                             <lightning-button variant="brand" label="Regular Flow" title="Regular Flow"
+                                                onclick={selectRegularFLow} class="slds-m-left_x-small">
+                                             </lightning-button>
+                                          </div>
+                                          <div class="slds-col slds-size_2-of-3">
+                                             <div> - Select up to 5 Objects to synchronize with Heroku</div>
+                                          </div>
+                                       </div>
+                                       <div class="slds-col slds-grid slds-size_1-of-1 slds-var-p-around_medium">
+                                          <div class="slds-col slds-size_1-of-3 slds-text-align_right">
+                                             <lightning-button variant="brand" label="Objects with Children"
+                                                title="Objects with Children" onclick={selectChildrenFlow}
+                                                class="slds-m-left_x-small"></lightning-button>
+                                          </div>
+                                          <div class="slds-col slds-size_2-of-3">
+                                             <div> - Select an Object and its children to be synchronized</div>
+                                          </div>
+                                       </div>
+                                    </div>
+                                 </template>
+                              </div>
 
                               <!--Section for All Objects-->
 
@@ -90,6 +119,45 @@
                                           sorted-direction={sortDirection} onsort={handleSortObjectData}>
                                        </lightning-datatable>
                                     </div>
+                                 </template>
+                              </div>
+
+                              <!-- SELECT PARENT OBJECTS SECTION-->
+
+                              <div class="slds-m-around_medium">
+                                 <template if:true={parentObjectsTable}>
+
+                                    <lightning-layout multiple-rows>
+                                       <lightning-layout-item padding="around_small" size="6"></lightning-layout-item>
+                                       <lightning-layout-item padding="around_small" size="4">
+                                          <lightning-input type="search" label="Search Object"
+                                             onchange={handleSearch_parentObject}></lightning-input>
+                                       </lightning-layout-item>
+                                    </lightning-layout>
+                                    <br />
+
+                                    <h2>Select <b>parent</b> Object</h2>
+                                    <div style="height: 250px;">
+                                       <lightning-datatable data-id="datarow" key-field="objectAPIName"
+                                          data={parentObjectsList} columns={columns}
+                                          onrowselection={parentObjectRowSelection} selected-rows={allObjevctSelectUI}
+                                          sorted-by={sortBy} sorted-direction={sortDirection}
+                                          onsort={handleSortObjectData} max-row-selection="1">
+                                       </lightning-datatable>
+                                    </div>
+
+                                    <template lwc:if={showChildrenTable}>
+                                       <br />
+                                       <h2>Select <b>child</b> Objects</h2>
+                                       <div style="height: 250px;">
+                                          <lightning-datatable data-id="datarow" key-field="objectAPIName"
+                                             data={relatedObjList} columns={columns}
+                                             onrowselection={allObjectRowSelection} selected-rows={allObjevctSelectUI}
+                                             sorted-by={sortBy} sorted-direction={sortDirection}
+                                             onsort={handleSortObjectData}>
+                                          </lightning-datatable>
+                                       </div>
+                                    </template>
                                  </template>
                               </div>
 

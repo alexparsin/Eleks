@@ -12,23 +12,61 @@ global class HerokuAdminUIController {
         }
     }
     @AuraEnabled(cacheable=true)
-    public static list<objectDetails> retrieveObjects(){
-        Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
-        list<String> ObjectsName = new list<String>();
-        list<objectDetails> objects = new list<objectDetails>();
+    public static list<objectDetails> retrieveObjects(){List<Schema.SObjectType> gd = Schema.getGlobalDescribe().Values();
+        Map<String, Schema.SObjectType> globalDescription = Schema.getGlobalDescribe();
+        List<HerokuAdminUIController.objectDetails> objects = new List<HerokuAdminUIController.objectDetails>();
         
-        for(Schema.SObjectType obj : gd.values()){
-            ObjectsName.add(String.valueOf(obj));
-        }
-        
-        for(Schema.DescribeSObjectResult objResult: Schema.describeSObjects(ObjectsName)){
-            if(!objResult.isCustomSetting()){
-                objects.add(new objectDetails(objResult.getLabel(), objResult.isCustom() ? 'Custom Object' : 'Standard Object', objResult.getName()));
+        for(Schema.SObjectType f : gd) {
+            List<HerokuAdminUIController.objectDetails> childObjects = new List<HerokuAdminUIController.objectDetails>();
+            String objName = f.getDescribe().getName();
+            Schema.sObjectType objType = globalDescription.get(objName);
+            Schema.DescribeSObjectResult r1 = objType.getDescribe();
+            
+            List<Schema.Childrelationship> relatedObjectsList = r1.childRelationships;
+            for(Schema.Childrelationship cr : relatedObjectsList){
+                Schema.DescribeSObjectResult childObjectDescribe = cr.getChildSObject().getDescribe();
+                childObjects.add(
+                    new HerokuAdminUIController.objectDetails(
+                        childObjectDescribe.label,
+                        childObjectDescribe.custom ? 'Custom Object' : 'Standard Object',
+                        childObjectDescribe.name,
+                        null
+                    )
+                );
             }
+            objects.add(
+                new HerokuAdminUIController.objectDetails(
+                    r1.label,
+                    r1.custom ? 'Custom Object' : 'Standard Object',
+                    r1.name,
+                    childObjects
+                )
+            );
         }
-        
-        system.debug('objects be: '+objects);
         return objects;
+    }
+
+    @AuraEnabled
+    public static List<objectDetails> getChildObjects(String objectName){
+        List<objectDetails> childObjects = new List<objectDetails>();
+        List<Schema.Childrelationship> relatedObjectsList = Schema.getGlobalDescribe().get(objectName).getdescribe().getChildRelationships();
+        for (Schema.Childrelationship relatedObject : relatedObjectsList) {
+            if(
+                relatedObject.getChildSObject().getDescribe().isUpdateable() &&
+                relatedObject.getChildSObject().getDescribe().getKeyPrefix()!=null &&
+                !relatedObject.getChildSObject().getDescribe().isCustomSetting() &&
+                relatedObject.getChildSObject().getDescribe().isCreateable()
+            )
+            childObjects.add(
+                new objectDetails(
+                    relatedObject.getChildSObject().getDescribe().getName(),
+                    relatedObject.getChildSObject().getDescribe().isCustom() ? 'Custom Object' : 'Standard Object',
+                    relatedObject.getChildSObject().getDescribe().getLabel(),
+                    null
+                )
+            );
+        }
+        return childObjects;
     }
     
     @AuraEnabled(cacheable=true)
@@ -103,10 +141,12 @@ global class HerokuAdminUIController {
         @AuraEnabled global String objectName;
         @AuraEnabled global String objectType;
         @AuraEnabled global String objectAPIName;
-        public objectDetails (String objectName, String objectType, String objectAPIName) {
+        @AuraEnabled global List<objectDetails> childObjects;
+        public objectDetails (String objectName, String objectType, String objectAPIName, List<objectDetails> childObjects) {
             this.objectName = objectName;
             this.objectType = objectType;
             this.objectAPIName = objectAPIName;
+            this.childObjects = childObjects;
         }
     }
     
@@ -196,5 +236,4 @@ global class HerokuAdminUIController {
         @AuraEnabled
         Public boolean IsObjWhereCondition{ get; set; }      
     }
-   
 }
